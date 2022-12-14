@@ -154,7 +154,15 @@ void PN532::loop() {
   this->current_uid_ = nfcid;
 
   if (next_task_ == READ) {
-    auto tag = this->read_tag_(nfcid);
+
+    uint16_t u16_ATQA = ((uint16_t)read[2] << 8) | read[3];
+    byte     u8_SAK   = read[4];
+
+    char s8_Buf[80];
+        sprintf(s8_Buf, "Card Type:   ATQA= 0x%04X, SAK= 0x%02X", u16_ATQA, u8_SAK);
+        ESP_LOGV(TAG, s8_Buf);
+
+    auto tag = this->read_tag_(nfcid, u16_ATQA, u8_SAK);
     for (auto *trigger : this->triggers_ontag_)
       trigger->process(tag);
 
@@ -273,15 +281,20 @@ void PN532::turn_off_rf_() {
   });
 }
 
-std::unique_ptr<nfc::NfcTag> PN532::read_tag_(std::vector<uint8_t> &uid) {
-  uint8_t type = nfc::guess_tag_type(uid.size());
+std::unique_ptr<nfc::NfcTag> PN532::read_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK) {
+  //uint8_t type = nfc::guess_tag_type(uid.size());
+
+  uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
 
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {
     ESP_LOGD(TAG, "Mifare classic");
     return this->read_mifare_classic_tag_(uid);
-  } else if (type == nfc::TAG_TYPE_2) {
-    ESP_LOGD(TAG, "Mifare ultralight");
+  } else if (type == nfc::TAG_TYPE_MIFARE_ULTRALIGHT) {
+    ESP_LOGD(TAG, "Mifare Ultralight");
     return this->read_mifare_ultralight_tag_(uid);
+  } else if (type == nfc::TAG_TYPE_MIFARE_DESFIRE) {
+    ESP_LOGD(TAG, "Mifare Desfire (WIP)");
+    return make_unique<nfc::NfcTag>(uid);
   } else if (type == nfc::TAG_TYPE_UNKNOWN) {
     ESP_LOGV(TAG, "Cannot determine tag type");
     return make_unique<nfc::NfcTag>(uid);
@@ -308,33 +321,36 @@ void PN532::write_mode(nfc::NdefMessage *message) {
   ESP_LOGD(TAG, "Waiting to write next tag");
 }
 
-bool PN532::clean_tag_(std::vector<uint8_t> &uid) {
-  uint8_t type = nfc::guess_tag_type(uid.size());
+bool PN532::clean_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK) {
+  //uint8_t type = nfc::guess_tag_type(uid.size());
+  uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {
     return this->format_mifare_classic_mifare_(uid);
-  } else if (type == nfc::TAG_TYPE_2) {
+  } else if (type == nfc::TAG_TYPE_MIFARE_ULTRALIGHT) {
     return this->clean_mifare_ultralight_();
   }
   ESP_LOGE(TAG, "Unsupported Tag for formatting");
   return false;
 }
 
-bool PN532::format_tag_(std::vector<uint8_t> &uid) {
-  uint8_t type = nfc::guess_tag_type(uid.size());
+bool PN532::format_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK) {
+  //uint8_t type = nfc::guess_tag_type(uid.size());
+  uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {
     return this->format_mifare_classic_ndef_(uid);
-  } else if (type == nfc::TAG_TYPE_2) {
+  } else if (type == nfc::TAG_TYPE_MIFARE_ULTRALIGHT) {
     return this->clean_mifare_ultralight_();
   }
   ESP_LOGE(TAG, "Unsupported Tag for formatting");
   return false;
 }
 
-bool PN532::write_tag_(std::vector<uint8_t> &uid, nfc::NdefMessage *message) {
-  uint8_t type = nfc::guess_tag_type(uid.size());
+bool PN532::write_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK, nfc::NdefMessage *message) {
+  //uint8_t type = nfc::guess_tag_type(uid.size());
+  uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {
     return this->write_mifare_classic_tag_(uid, message);
-  } else if (type == nfc::TAG_TYPE_2) {
+  } else if (type == nfc::TAG_TYPE_MIFARE_ULTRALIGHT) {
     return this->write_mifare_ultralight_tag_(uid, message);
   }
   ESP_LOGE(TAG, "Unsupported Tag for formatting");

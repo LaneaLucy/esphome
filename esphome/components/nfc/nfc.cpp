@@ -39,6 +39,25 @@ uint8_t guess_tag_type(uint8_t uid_length) {
   }
 }
 
+uint8_t get_tag_type(uint8_t uid_length, uint16_t u16_ATQA, byte u8_SAK) {
+
+  // Examples:              ATQA    SAK  UID length
+  // MIFARE Mini            00 04   09   4 bytes
+  // MIFARE Mini            00 44   09   7 bytes
+  // MIFARE Classic 1k      00 04   08   4 bytes
+  // MIFARE Classic 4k      00 02   18   4 bytes
+  // MIFARE Ultralight      00 44   00   7 bytes
+  // MIFARE DESFire Default 03 44   20   7 bytes
+  // MIFARE DESFire Random  03 04   20   4 bytes
+  // See "Mifare Identification & Card Types.pdf"
+
+  if (uid.size() == 4 && u16_ATQA == 0x0004 && u8_SAK == 0x08) return nfc::TAG_TYPE_MIFARE_CLASSIC;
+  else if (uid.size() == 4 && u16_ATQA == 0x0002 && u8_SAK == 0x18) return nfc::TAG_TYPE_MIFARE_CLASSIC;
+  else if (uid.size() == 7 && u16_ATQA == 0x0044 && u8_SAK == 0x00) return nfc::TAG_TYPE_MIFARE_ULTRALIGHT;
+  else if (uid.size() == 7 && u16_ATQA == 0x0344 && u8_SAK == 0x20) return nfc::TAG_TYPE_MIFARE_DESFIRE;
+  else return nfc::TAG_TYPE_UNKNOWN;
+}
+
 uint8_t get_mifare_classic_ndef_start_index(std::vector<uint8_t> &data) {
   for (uint8_t i = 0; i < MIFARE_CLASSIC_BLOCK_SIZE; i++) {
     if (data[i] == 0x00) {
