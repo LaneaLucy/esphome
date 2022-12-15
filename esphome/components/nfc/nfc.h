@@ -20,6 +20,11 @@ static const uint8_t MIFARE_ULTRALIGHT_READ_SIZE = 4;
 static const uint8_t MIFARE_ULTRALIGHT_DATA_START_PAGE = 4;
 static const uint8_t MIFARE_ULTRALIGHT_MAX_PAGE = 63;
 
+static const uint8_t MIFARE_DESFIRE_PAGE_SIZE = 4;
+static const uint8_t MIFARE_DESFIRE_READ_SIZE = 4;
+static const uint8_t MIFARE_DESFIRE_DATA_START_PAGE = 4;
+static const uint8_t MIFARE_DESFIRE_MAX_PAGE = 63;
+
 static const uint8_t TAG_TYPE_MIFARE_CLASSIC = 0;
 static const uint8_t TAG_TYPE_1 = 1;
 static const uint8_t TAG_TYPE_2 = 2;
@@ -49,7 +54,7 @@ std::string format_uid(std::vector<uint8_t> &uid);
 std::string format_bytes(std::vector<uint8_t> &bytes);
 
 uint8_t guess_tag_type(uint8_t uid_length);
-uint8_t get_tag_type(uint8_t uid_length, uint16_t u16_ATQA, byte u8_SAK);
+uint8_t get_tag_type(uint8_t uid_length, uint16_t u16_ATQA, uint8_t u8_SAK);
 uint8_t get_mifare_classic_ndef_start_index(std::vector<uint8_t> &data);
 bool decode_mifare_classic_tlv(std::vector<uint8_t> &data, uint32_t &message_length, uint8_t &message_start_index);
 uint32_t get_mifare_classic_buffer_size(uint32_t message_length);
@@ -58,6 +63,8 @@ bool mifare_classic_is_first_block(uint8_t block_num);
 bool mifare_classic_is_trailer_block(uint8_t block_num);
 
 uint32_t get_mifare_ultralight_buffer_size(uint32_t message_length);
+
+uint32_t get_mifare_desfire_buffer_size(uint32_t message_length);
 
 }  // namespace nfc
 }  // namespace esphome

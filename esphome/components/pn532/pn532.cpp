@@ -151,12 +151,12 @@ void PN532::loop() {
       return;
   }
 
+  uint16_t u16_ATQA = ((uint16_t)read[2] << 8) | read[3];
+  uint8_t  u8_SAK   = read[4];
+
   this->current_uid_ = nfcid;
 
   if (next_task_ == READ) {
-
-    uint16_t u16_ATQA = ((uint16_t)read[2] << 8) | read[3];
-    byte     u8_SAK   = read[4];
 
     char s8_Buf[80];
         sprintf(s8_Buf, "Card Type:   ATQA= 0x%04X, SAK= 0x%02X", u16_ATQA, u8_SAK);
@@ -179,13 +179,13 @@ void PN532::loop() {
     }
   } else if (next_task_ == CLEAN) {
     ESP_LOGD(TAG, "  Tag cleaning...");
-    if (!this->clean_tag_(nfcid)) {
+    if (!this->clean_tag_(nfcid, u16_ATQA, u8_SAK)) {
       ESP_LOGE(TAG, "  Tag was not fully cleaned successfully");
     }
     ESP_LOGD(TAG, "  Tag cleaned!");
   } else if (next_task_ == FORMAT) {
     ESP_LOGD(TAG, "  Tag formatting...");
-    if (!this->format_tag_(nfcid)) {
+    if (!this->format_tag_(nfcid, u16_ATQA, u8_SAK)) {
       ESP_LOGE(TAG, "Error formatting tag as NDEF");
     }
     ESP_LOGD(TAG, "  Tag formatted!");
@@ -193,11 +193,11 @@ void PN532::loop() {
     if (this->next_task_message_to_write_ != nullptr) {
       ESP_LOGD(TAG, "  Tag writing...");
       ESP_LOGD(TAG, "  Tag formatting...");
-      if (!this->format_tag_(nfcid)) {
+      if (!this->format_tag_(nfcid, u16_ATQA, u8_SAK)) {
         ESP_LOGE(TAG, "  Tag could not be formatted for writing");
       } else {
         ESP_LOGD(TAG, "  Writing NDEF data");
-        if (!this->write_tag_(nfcid, this->next_task_message_to_write_)) {
+        if (!this->write_tag_(nfcid, u16_ATQA, u8_SAK, this->next_task_message_to_write_)) {
           ESP_LOGE(TAG, "  Failed to write message to tag");
         }
         ESP_LOGD(TAG, "  Finished writing NDEF data");
@@ -281,7 +281,7 @@ void PN532::turn_off_rf_() {
   });
 }
 
-std::unique_ptr<nfc::NfcTag> PN532::read_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK) {
+std::unique_ptr<nfc::NfcTag> PN532::read_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK) {
   //uint8_t type = nfc::guess_tag_type(uid.size());
 
   uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
@@ -321,7 +321,7 @@ void PN532::write_mode(nfc::NdefMessage *message) {
   ESP_LOGD(TAG, "Waiting to write next tag");
 }
 
-bool PN532::clean_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK) {
+bool PN532::clean_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK) {
   //uint8_t type = nfc::guess_tag_type(uid.size());
   uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {
@@ -333,7 +333,7 @@ bool PN532::clean_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK
   return false;
 }
 
-bool PN532::format_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK) {
+bool PN532::format_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK) {
   //uint8_t type = nfc::guess_tag_type(uid.size());
   uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {
@@ -345,7 +345,7 @@ bool PN532::format_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SA
   return false;
 }
 
-bool PN532::write_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK, nfc::NdefMessage *message) {
+bool PN532::write_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK, nfc::NdefMessage *message) {
   //uint8_t type = nfc::guess_tag_type(uid.size());
   uint8_t type = nfc::get_tag_type(uid.size(), u16_ATQA, u8_SAK);
   if (type == nfc::TAG_TYPE_MIFARE_CLASSIC) {

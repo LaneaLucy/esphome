@@ -27,7 +27,7 @@ class PN532 : public PollingComponent {
   void dump_config() override;
 
   void update() override;
-  float get_setup_priority() const override;data
+  float get_setup_priority() const override;
 
   void loop() override;
 
@@ -56,11 +56,11 @@ class PN532 : public PollingComponent {
   virtual bool read_data(std::vector<uint8_t> &data, uint8_t len) = 0;
   virtual bool read_response(uint8_t command, std::vector<uint8_t> &data) = 0;
 
-  std::unique_ptr<nfc::NfcTag> read_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK);
+  std::unique_ptr<nfc::NfcTag> read_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK);
 
-  bool format_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK);
-  bool clean_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK);
-  bool write_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, byte u8_SAK, nfc::NdefMessage *message);
+  bool format_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK);
+  bool clean_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK);
+  bool write_tag_(std::vector<uint8_t> &uid, uint16_t u16_ATQA, uint8_t u8_SAK, nfc::NdefMessage *message);
 
   std::unique_ptr<nfc::NfcTag> read_mifare_classic_tag_(std::vector<uint8_t> &uid);
   bool read_mifare_classic_block_(uint8_t block_num, std::vector<uint8_t> &data);
@@ -78,6 +78,15 @@ class PN532 : public PollingComponent {
   bool write_mifare_ultralight_page_(uint8_t page_num, std::vector<uint8_t> &write_data);
   bool write_mifare_ultralight_tag_(std::vector<uint8_t> &uid, nfc::NdefMessage *message);
   bool clean_mifare_ultralight_();
+
+  std::unique_ptr<nfc::NfcTag> read_mifare_desfire_tag_(std::vector<uint8_t> &uid);
+  bool read_mifare_desfire_page_(uint8_t page_num, std::vector<uint8_t> &data);
+  bool is_mifare_desfire_formatted_();
+  uint16_t read_mifare_desfire_capacity_();
+  bool find_mifare_desfire_ndef_(uint8_t &message_length, uint8_t &message_start_index);
+  bool write_mifare_desfire_page_(uint8_t page_num, std::vector<uint8_t> &write_data);
+  bool write_mifare_desfire_tag_(std::vector<uint8_t> &uid, nfc::NdefMessage *message);
+  bool clean_mifare_desfire_();
 
   bool requested_read_{false};
   std::vector<PN532BinarySensor *> binary_sensors_;

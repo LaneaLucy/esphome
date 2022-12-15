@@ -39,7 +39,7 @@ uint8_t guess_tag_type(uint8_t uid_length) {
   }
 }
 
-uint8_t get_tag_type(uint8_t uid_length, uint16_t u16_ATQA, byte u8_SAK) {
+uint8_t get_tag_type(uint8_t uid_length, uint16_t u16_ATQA, uint8_t u8_SAK) {
 
   // Examples:              ATQA    SAK  UID length
   // MIFARE Mini            00 04   09   4 bytes
@@ -51,10 +51,10 @@ uint8_t get_tag_type(uint8_t uid_length, uint16_t u16_ATQA, byte u8_SAK) {
   // MIFARE DESFire Random  03 04   20   4 bytes
   // See "Mifare Identification & Card Types.pdf"
 
-  if (uid.size() == 4 && u16_ATQA == 0x0004 && u8_SAK == 0x08) return nfc::TAG_TYPE_MIFARE_CLASSIC;
-  else if (uid.size() == 4 && u16_ATQA == 0x0002 && u8_SAK == 0x18) return nfc::TAG_TYPE_MIFARE_CLASSIC;
-  else if (uid.size() == 7 && u16_ATQA == 0x0044 && u8_SAK == 0x00) return nfc::TAG_TYPE_MIFARE_ULTRALIGHT;
-  else if (uid.size() == 7 && u16_ATQA == 0x0344 && u8_SAK == 0x20) return nfc::TAG_TYPE_MIFARE_DESFIRE;
+  if (uid_length == 4 && u16_ATQA == 0x0004 && u8_SAK == 0x08) return nfc::TAG_TYPE_MIFARE_CLASSIC;
+  else if (uid_length == 4 && u16_ATQA == 0x0002 && u8_SAK == 0x18) return nfc::TAG_TYPE_MIFARE_CLASSIC;
+  else if (uid_length == 7 && u16_ATQA == 0x0044 && u8_SAK == 0x00) return nfc::TAG_TYPE_MIFARE_ULTRALIGHT;
+  else if (uid_length == 7 && u16_ATQA == 0x0344 && u8_SAK == 0x20) return nfc::TAG_TYPE_MIFARE_DESFIRE;
   else return nfc::TAG_TYPE_UNKNOWN;
 }
 
